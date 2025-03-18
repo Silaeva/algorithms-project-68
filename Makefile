@@ -5,7 +5,7 @@ run:
 	bin/nodejs-package.js 10
 
 deps-install:
-	npm ci --legacy-peer-deps
+	npm ci
 
 deps-update:
 	npx ncu -u
@@ -20,6 +20,6 @@ lint:
 	npx eslint .
 
 publish:
-	npm publish
+	npx release-it
 
 .PHONY: test

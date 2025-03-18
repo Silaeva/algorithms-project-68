@@ -1,4 +1,7 @@
-import serve from "./index.js";
+// @ts-check
+
+import serve from "../src/index.js";
+import { describe, expect, test } from "vitest";
 
 const routes = [
   {
