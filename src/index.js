@@ -1,9 +1,9 @@
-// index.js
 export default (routes) => {
   const root = {};
 
-  const addRoute = (method, path, handler) => {
-    const segments = path.split('/').filter(Boolean);
+  const addRoute = (route) => {
+    const { path, handler, method = "GET", constraints = {} } = route;
+    const segments = path.split("/").filter(Boolean);
     let node = root;
 
     for (const segment of segments) {
@@ -11,11 +11,15 @@ export default (routes) => {
         node.children = {};
       }
 
-      if (segment.startsWith(':')) {
+      if (segment.startsWith(":")) {
+        const paramName = segment.slice(1);
         if (!node.paramChild) {
-          node.paramChild = { paramName: segment.slice(1) };
+          node.paramChild = {};
         }
-        node = node.paramChild;
+        if (!node.paramChild[paramName]) {
+          node.paramChild[paramName] = { paramName, constraint: constraints[paramName] };
+        }
+        node = node.paramChild[paramName];
       } else {
         if (!node.children[segment]) {
           node.children[segment] = {};
@@ -30,18 +34,19 @@ export default (routes) => {
     node.handlers[method] = handler;
   };
 
-  routes.forEach(({ method = 'GET', path, handler }) => addRoute(method, path, handler));
+  routes.forEach(addRoute);
 
-  const serve = ({ path, method = 'GET' }) => {
-    const segments = path.split('/').filter(Boolean);
+  const serve = ({ path, method = "GET" }) => {
+    const segments = path.split("/").filter(Boolean);
     let node = root;
     const params = {};
 
     const findRoute = (currentNode, remainingSegments) => {
       if (remainingSegments.length === 0) {
-        return currentNode.handlers && currentNode.handlers[method]
-          ? { handler: currentNode.handlers[method], params }
-          : null;
+        if (currentNode.handlers && currentNode.handlers[method]) {
+          return { handler: currentNode.handlers[method], params };
+        }
+        return null;
       }
 
       const [currentSegment, ...restSegments] = remainingSegments;
@@ -52,27 +57,27 @@ export default (routes) => {
       }
 
       if (currentNode.paramChild) {
-        params[currentNode.paramChild.paramName] = currentSegment;
-        const result = findRoute(currentNode.paramChild, restSegments);
-        if (result) return result;
-        delete params[currentNode.paramChild.paramName];
+        for (const paramName in currentNode.paramChild) {
+          const paramNode = currentNode.paramChild[paramName];
+          if (paramNode.constraint && !new RegExp(paramNode.constraint).test(currentSegment)) {
+            continue;
+          }
+          params[paramName] = currentSegment;
+          const result = findRoute(paramNode, restSegments);
+          if (result) return result;
+          delete params[paramName];
+        }
       }
 
       return null;
     };
 
     const result = findRoute(node, segments);
-
     if (!result) {
-      throw new Error('Route not found');
+      throw new Error("Route not found");
     }
 
-    return {
-      ...result.handler,
-      method,
-      path,
-      params,
-    };
+    return { ...result.handler, params };
   };
 
   return { serve };
