@@ -1,50 +1,51 @@
-import serve from './index.js';
+// index.test.js
+import serve from "./index.js";
 
 const routes = [
   {
-    path: '/courses',
+    path: "/courses",
     handler: {
-      body: 'courses'
+      body: "courses",
     },
   },
   {
-    path: '/courses/:id',
+    path: "/courses/:id",
     handler: {
-      body: 'course'
+      body: "course",
     },
   },
   {
-    path: '/courses/:course_id/exercises/:id',
+    path: "/courses/:course_id/exercises/:id",
     handler: {
-      body: 'exercise'
+      body: "exercise",
     },
   },
 ];
 
-describe('Router Service', () => {
-  test('returns correct handler for existing static route', () => {
+describe("Router Service", () => {
+  test("returns correct handler for existing static route", () => {
     const router = serve(routes);
-    expect(router.serve('/courses').body).toBe('courses');
-    expect(router.serve('/courses/basics').body).toBe('course');
+    expect(router.serve("/courses").body).toBe("courses");
+    expect(router.serve("/courses/basics").body).toBe("course");
   });
 
-  test('returns correct handler and params for dynamic route', () => {
+  test("returns correct handler and params for dynamic route", () => {
     const router = serve(routes);
-    const result = router.serve('/courses/php_trees');
-    expect(result.body).toBe('course');
-    expect(result.params.id).toBe('php_trees');
+    const result = router.serve("/courses/php_trees");
+    expect(result.body).toBe("course");
+    expect(result.params.id).toBe("php_trees");
   });
 
-  test('returns correct handler and params for nested dynamic route', () => {
+  test("returns correct handler and params for nested dynamic route", () => {
     const router = serve(routes);
-    const result = router.serve('/courses/js_react/exercises/1');
-    expect(result.body).toBe('exercise');
-    expect(result.params.course_id).toBe('js_react');
-    expect(result.params.id).toBe('1');
+    const result = router.serve("/courses/js_react/exercises/1");
+    expect(result.body).toBe("exercise");
+    expect(result.params.course_id).toBe("js_react");
+    expect(result.params.id).toBe("1");
   });
 
-  test('throws error for non-existing route', () => {
+  test("throws error for non-existing route", () => {
     const router = serve(routes);
-    expect(() => router.serve('/no_such_way')).toThrow('Route not found');
+    expect(() => router.serve("/no_such_way")).toThrow("Route not found");
   });
 });
