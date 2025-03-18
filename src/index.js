@@ -1,9 +1,9 @@
+// index.js
 export default (routes) => {
   const root = {};
 
-  // Функция для добавления маршрута в дерево
-  const addRoute = (path, handler) => {
-    const segments = path.split("/").filter(Boolean);
+  const addRoute = (method, path, handler) => {
+    const segments = path.split('/').filter(Boolean);
     let node = root;
 
     for (const segment of segments) {
@@ -11,17 +11,12 @@ export default (routes) => {
         node.children = {};
       }
 
-      if (segment.startsWith(":")) {
-        // Динамический сегмент
-        if (!node.paramChildren) {
-          node.paramChildren = [];
+      if (segment.startsWith(':')) {
+        if (!node.paramChild) {
+          node.paramChild = { paramName: segment.slice(1) };
         }
-        const paramName = segment.slice(1);
-        const paramNode = { paramName, children: {} };
-        node.paramChildren.push(paramNode);
-        node = paramNode;
+        node = node.paramChild;
       } else {
-        // Статический сегмент
         if (!node.children[segment]) {
           node.children[segment] = {};
         }
@@ -29,59 +24,53 @@ export default (routes) => {
       }
     }
 
-    // Сохраняем обработчик в конечном узле
-    node.handler = handler;
+    if (!node.handlers) {
+      node.handlers = {};
+    }
+    node.handlers[method] = handler;
   };
 
-  // Добавляем все маршруты в дерево
-  routes.forEach((route) => addRoute(route.path, route.handler));
+  routes.forEach(({ method = 'GET', path, handler }) => addRoute(method, path, handler));
 
-  // Функция для поиска маршрута
-  const serve = (path) => {
-    const segments = path.split("/").filter(Boolean);
+  const serve = ({ path, method = 'GET' }) => {
+    const segments = path.split('/').filter(Boolean);
     let node = root;
     const params = {};
 
-    const findRoute = (currentNode, remainingSegments, params) => {
+    const findRoute = (currentNode, remainingSegments) => {
       if (remainingSegments.length === 0) {
-        return currentNode.handler
-          ? { handler: currentNode.handler, params }
+        return currentNode.handlers && currentNode.handlers[method]
+          ? { handler: currentNode.handlers[method], params }
           : null;
       }
 
       const [currentSegment, ...restSegments] = remainingSegments;
 
-      // Проверяем статические сегменты
       if (currentNode.children && currentNode.children[currentSegment]) {
-        const result = findRoute(
-          currentNode.children[currentSegment],
-          restSegments,
-          params
-        );
+        const result = findRoute(currentNode.children[currentSegment], restSegments);
         if (result) return result;
       }
 
-      // Проверяем динамические сегменты
-      if (currentNode.paramChildren) {
-        for (const paramNode of currentNode.paramChildren) {
-          params[paramNode.paramName] = currentSegment;
-          const result = findRoute(paramNode, restSegments, params);
-          if (result) return result;
-          delete params[paramNode.paramName]; // Откатываем параметр, если маршрут не найден
-        }
+      if (currentNode.paramChild) {
+        params[currentNode.paramChild.paramName] = currentSegment;
+        const result = findRoute(currentNode.paramChild, restSegments);
+        if (result) return result;
+        delete params[currentNode.paramChild.paramName];
       }
 
       return null;
     };
 
-    const result = findRoute(node, segments, params);
+    const result = findRoute(node, segments);
 
     if (!result) {
-      throw new Error("Route not found");
+      throw new Error('Route not found');
     }
 
     return {
       ...result.handler,
+      method,
+      path,
       params,
     };
   };

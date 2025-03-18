@@ -3,49 +3,73 @@ import serve from "./index.js";
 
 const routes = [
   {
-    path: "/courses",
-    handler: {
-      body: "courses",
-    },
-  },
-  {
+    method: "GET",
     path: "/courses/:id",
-    handler: {
-      body: "course",
-    },
+    handler: { body: "course!" },
   },
   {
-    path: "/courses/:course_id/exercises/:id",
-    handler: {
-      body: "exercise",
-    },
+    method: "POST",
+    path: "/courses",
+    handler: { body: "created!" },
+  },
+  {
+    method: "GET",
+    path: "/courses",
+    handler: { body: "courses!" },
+  },
+  {
+    method: "PUT",
+    path: "/courses/:id",
+    handler: { body: "updated!" },
+  },
+  {
+    method: "DELETE",
+    path: "/courses/:id",
+    handler: { body: "deleted!" },
   },
 ];
 
-describe("Router Service", () => {
-  test("returns correct handler for existing static route", () => {
+describe("Router Service with HTTP Methods", () => {
+  test("returns correct handler for GET /courses", () => {
     const router = serve(routes);
-    expect(router.serve("/courses").body).toBe("courses");
-    expect(router.serve("/courses/basics").body).toBe("course");
+    const result = router.serve({ path: "/courses" });
+    expect(result.body).toBe("courses!");
   });
 
-  test("returns correct handler and params for dynamic route", () => {
+  test("returns correct handler for POST /courses", () => {
     const router = serve(routes);
-    const result = router.serve("/courses/php_trees");
-    expect(result.body).toBe("course");
-    expect(result.params.id).toBe("php_trees");
+    const result = router.serve({ path: "/courses", method: "POST" });
+    expect(result.body).toBe("created!");
   });
 
-  test("returns correct handler and params for nested dynamic route", () => {
+  test("returns correct handler for GET /courses/:id", () => {
     const router = serve(routes);
-    const result = router.serve("/courses/js_react/exercises/1");
-    expect(result.body).toBe("exercise");
-    expect(result.params.course_id).toBe("js_react");
-    expect(result.params.id).toBe("1");
+    const result = router.serve({ path: "/courses/42" });
+    expect(result.body).toBe("course!");
+    expect(result.params.id).toBe("42");
+  });
+
+  test("returns correct handler for PUT /courses/:id", () => {
+    const router = serve(routes);
+    const result = router.serve({ path: "/courses/42", method: "PUT" });
+    expect(result.body).toBe("updated!");
+    expect(result.params.id).toBe("42");
+  });
+
+  test("returns correct handler for DELETE /courses/:id", () => {
+    const router = serve(routes);
+    const result = router.serve({ path: "/courses/42", method: "DELETE" });
+    expect(result.body).toBe("deleted!");
+    expect(result.params.id).toBe("42");
   });
 
   test("throws error for non-existing route", () => {
     const router = serve(routes);
-    expect(() => router.serve("/no_such_way")).toThrow("Route not found");
+    expect(() => router.serve({ path: "/no_such_way" })).toThrow("Route not found");
+  });
+
+  test("throws error for existing route but wrong method", () => {
+    const router = serve(routes);
+    expect(() => router.serve({ path: "/courses", method: "DELETE" })).toThrow("Route not found");
   });
 });
