@@ -1,4 +1,4 @@
-import router from './index'; // Путь к файлу с вашим роутером
+import router from '../src/index'; // Путь к файлу с вашим роутером
 
 describe('Router', () => {
   let routes;
