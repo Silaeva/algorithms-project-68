@@ -1,10 +1,11 @@
-import makeRouter from "./index.js"; // Убедись, что путь к файлу правильный
+import router from './index'; // Путь к файлу с вашим роутером
 
-describe("Router", () => {
-  let router;
+describe('Router', () => {
+  let routes;
 
   beforeEach(() => {
-    const routes = [
+    // Дефолтные маршруты для тестирования
+    routes = [
       { path: "/home", handler: { body: "home!" } },
       { path: "/users/:id", handler: { body: "user profile" } },
       {
@@ -18,42 +19,46 @@ describe("Router", () => {
         handler: { body: "data saved" },
       },
     ];
-    router = makeRouter(routes);
   });
 
-  test("Статический маршрут", () => {
-    const result = router({ path: "/home", method: "GET" });
-    expect(result.handler.body).toBe("home!");
+  test('Статический маршрут', () => {
+    const request = { path: '/home', method: 'GET' };
+    const result = router(routes, request);
+    expect(result.handler.body).toBe('home!');
   });
 
-  test("Динамический маршрут", () => {
-    const result = router({ path: "/users/42", method: "GET" });
-    expect(result.handler.body).toBe("user profile");
-    expect(result.params).toEqual({ id: "42" });
+  test('Динамический маршрут', () => {
+    const request = { path: '/users/42', method: 'GET' };
+    const result = router(routes, request);
+    expect(result.handler.body).toBe('user profile');
+    expect(result.params).toEqual({ id: '42' });
   });
 
-  test("Ограничение параметров (constraints)", () => {
-    expect(() => router({ path: "/posts/abc", method: "GET" })).toThrow(
-      "Route not found: /posts/abc [GET]"
-    );
+  test('Ограничение параметров (constraints)', () => {
+    const request1 = { path: '/posts/abc', method: 'GET' };
+    expect(() => router(routes, request1)).toThrow('Route not found: /posts/abc [GET]');
 
-    const result = router({ path: "/posts/123", method: "GET" });
-    expect(result.handler.body).toBe("post details");
-    expect(result.params).toEqual({ postId: "123" });
+    const request2 = { path: '/posts/123', method: 'GET' };
+    const result2 = router(routes, request2);
+    expect(result2.handler.body).toBe('post details');
+    expect(result2.params).toEqual({ postId: '123' });
   });
 
-  test("Методы HTTP (POST)", () => {
-    expect(() => router({ path: "/api/data", method: "GET" })).toThrow(
-      "Route not found: /api/data [GET]"
-    );
+  test('Методы HTTP (POST)', () => {
+    const request1 = { path: '/api/data', method: 'GET' };
+    expect(() => router(routes, request1)).toThrow('Route not found: /api/data [GET]');
 
-    const result = router({ path: "/api/data", method: "POST" });
-    expect(result.handler.body).toBe("data saved");
+    const request2 = { path: '/api/data', method: 'POST' };
+    const result2 = router(routes, request2);
+    expect(result2.handler.body).toBe('data saved');
   });
 
-  test("Неизвестный маршрут", () => {
-    expect(() => router({ path: "/unknown", method: "GET" })).toThrow(
-      "Route not found: /unknown [GET]"
-    );
+  test('Неизвестный маршрут', () => {
+    const request = { path: '/unknown', method: 'GET' };
+    expect(() => router(routes, request)).toThrow('Route not found: /unknown [GET]');
+  });
+
+  test('Проверка на то, что переданный маршрут не является массивом', () => {
+    expect(() => router({}, { path: '/home', method: 'GET' })).toThrow('routes must be an array');
   });
 });
