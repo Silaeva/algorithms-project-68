@@ -49,6 +49,6 @@
   },
   "jest": {
     "transform": {},
-    "testEnvironment": "jsdom"
+    "testEnvironment": "node"
   }
 }
