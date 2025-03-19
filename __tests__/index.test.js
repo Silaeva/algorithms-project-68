@@ -1,4 +1,4 @@
-import makeRouter from "./index.js"; // Убедись, что путь к файлу правильный
+import makeRouter from "../src/index.js"; // Убедись, что путь к файлу правильный
 
 describe("Router", () => {
   let router;
