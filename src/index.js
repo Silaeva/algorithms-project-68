@@ -1,96 +1,115 @@
-export default (routes) => {
-  const root = Object.create(null);
+const createRouter = (routes) => {
+  // Создаем префиксное дерево
+  const buildTrie = (routes) => {
+    const trie = {};
 
-  const addRoute = (route) => {
-    const { path, handler, method = 'GET', constraints = {} } = route; // Добавляем constraints
-    const segments = path.replace(/^\/+/, "").split("/").filter(Boolean); // Разделяем путь на сегменты
-    let node = root;
+    routes.forEach((route) => {
+      const method = route.method || 'GET'; // По умолчанию метод GET
+      const segments = route.path.split('/').filter(Boolean); // Разделяем путь на сегменты
+      let currentNode = trie;
 
-    segments.forEach((segment) => {
-      // Если сегмент динамический (например, :id), создаем отдельный узел
-      if (segment.startsWith(":")) {
-        const paramName = segment.slice(1); // Извлекаем имя параметра
-        if (!node.paramChild) {
-          node.paramChild = Object.create(null);
-        }
-        if (!node.paramChild[paramName]) {
-          node.paramChild[paramName] = { paramName, constraint: constraints[paramName] }; // Добавляем ограничение
-        }
-        node = node.paramChild[paramName];
-      } else {
-        // Для статического сегмента создаем соответствующий дочерний узел
-        if (!node.children) {
-          node.children = Object.create(null);
-        }
-        if (!node.children[segment]) {
-          node.children[segment] = Object.create(null);
-        }
-        node = node.children[segment];
+      // Создаем узел для метода, если его нет
+      if (!currentNode[method]) {
+        currentNode[method] = {};
       }
+      currentNode = currentNode[method];
+
+      segments.forEach((segment) => {
+        // Если сегмент динамический (начинается с :)
+        if (segment.startsWith(':')) {
+          const paramName = segment.slice(1); // Имя параметра
+          const constraint = route.constraints?.[paramName]; // Ограничение для параметра
+
+          if (!currentNode[':dynamic']) {
+            currentNode[':dynamic'] = {};
+          }
+          currentNode = currentNode[':dynamic'];
+          currentNode.paramName = paramName; // Сохраняем имя параметра
+          currentNode.constraint = constraint; // Сохраняем ограничение
+        } else {
+          if (!currentNode[segment]) {
+            currentNode[segment] = {};
+          }
+          currentNode = currentNode[segment];
+        }
+      });
+
+      // Сохраняем обработчик в конечном узле
+      currentNode.handler = route.handler;
     });
 
-    // Добавляем обработчик с учетом метода
-    if (!node.handlers) {
-      node.handlers = Object.create(null);
-    }
-    node.handlers[method] = handler;
+    return trie;
   };
 
-  // Добавляем все маршруты в префиксное дерево
-  routes.forEach(addRoute);
+  const trie = buildTrie(routes);
 
-  // Функция для поиска маршрута в префиксном дереве с учетом метода
-  const serve = ({ path, method = 'GET' }) => {
-    const segments = path.replace(/^\/+/, "").split("/").filter(Boolean);
-    let node = root;
-    const params = Object.create(null);
+  // Проверка ограничения для динамического сегмента
+  const checkConstraint = (value, constraint) => {
+    if (!constraint) return true; // Если ограничение не задано, пропускаем проверку
+    const regex = new RegExp(`^${constraint}$`);
+    return regex.test(value);
+  };
 
-    const findRoute = (currentNode, remainingSegments) => {
-      if (remainingSegments.length === 0) {
-        if (currentNode.handlers && currentNode.handlers[method]) {
-          return { handler: currentNode.handlers[method], params };
+  // Поиск в префиксном дереве
+  const findInTrie = (method, path) => {
+    const segments = path.split('/').filter(Boolean); // Разделяем путь на сегменты
+    let currentNode = trie[method]; // Начинаем поиск с узла для указанного метода
+
+    if (!currentNode) {
+      return null; // Если метод не найден, возвращаем null
+    }
+
+    const params = {};
+
+    for (const segment of segments) {
+      if (currentNode[segment]) {
+        // Если есть статический сегмент, переходим к нему
+        currentNode = currentNode[segment];
+      } else if (currentNode[':dynamic']) {
+        // Если есть динамический сегмент, проверяем ограничение
+        const paramName = currentNode[':dynamic'].paramName;
+        const constraint = currentNode[':dynamic'].constraint;
+
+        if (!checkConstraint(segment, constraint)) {
+          return null; // Ограничение не выполнено
         }
+
+        params[paramName] = segment; // Сохраняем значение параметра
+        currentNode = currentNode[':dynamic'];
+      } else {
+        // Если сегмент не найден, маршрут не существует
         return null;
       }
-
-      const [currentSegment, ...restSegments] = remainingSegments;
-
-      // Проверяем точное совпадение сегмента
-      if (currentNode.children && currentNode.children[currentSegment]) {
-        const result = findRoute(
-          currentNode.children[currentSegment],
-          restSegments
-        );
-        if (result) return result;
-      }
-
-      // Проверяем параметрический маршрут
-      if (currentNode.paramChild) {
-        for (const paramName in currentNode.paramChild) {
-          const paramNode = currentNode.paramChild[paramName];
-          params[paramName] = currentSegment; // Записываем параметр в объект params
-
-          // Проверка ограничения (регулярного выражения)
-          if (paramNode.constraint && !new RegExp(paramNode.constraint).test(currentSegment)) {
-            continue; // Пропускаем этот параметр, если не соответствует регулярному выражению
-          }
-
-          const result = findRoute(paramNode, restSegments);
-          if (result) return result;
-          delete params[paramName];
-        }
-      }
-
-      return null;
-    };
-
-    const result = findRoute(node, segments);
-    if (!result) {
-      throw new Error(`Route not found: ${path} [${method}]`);
     }
 
-    return { handler: result.handler, params };
+    // Если найден обработчик, возвращаем его и параметры
+    if (currentNode.handler) {
+      return {
+        handler: currentNode.handler,
+        params,
+      };
+    }
+
+    return null;
   };
 
-  return { serve };
+  return {
+    serve(request) {
+      const { method = 'GET', path } = request; // По умолчанию метод GET
+      const result = findInTrie(method, path);
+
+      if (!result) {
+        throw new Error(`Route not found: ${method} ${path}`);
+      }
+
+      return {
+        path,
+        method,
+        handler: result.handler,
+        params: result.params,
+      };
+    },
+  };
 };
+
+export default createRouter;
