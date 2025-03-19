@@ -1,25 +1,21 @@
 {
   "name": "@hexlet/code",
-  "version": "0.0.3",
-  "description": "Node.js boilerplate package",
-  "bin": {
-    "nodejs-package": "bin/nodejs-package.js"
-  },
+  "version": "0.0.1",
+  "description": "",
   "simple-git-hooks": {
     "pre-push": "npx lint-staged"
   },
   "engines": {
-    "node": ">=21"
+    "node": ">=14"
   },
   "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "npx jest"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hexlet-boilerplates/nodejs-package.git"
   },
-  "author": "",
+  "author": "Kirill Mokevnin",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/hexlet-boilerplates/nodejs-package/issues"
@@ -27,26 +23,31 @@
   "type": "module",
   "homepage": "https://github.com/hexlet-boilerplates/nodejs-package#readme",
   "dependencies": {
-    "@stylistic/eslint-plugin": "^4.1.0",
-    "debug": "^4.4.0",
-    "es-toolkit": "^1.32.0",
-    "jiti": "^2.4.2",
-    "vitest": "^3.0.7"
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.19.0",
+    "debug": "^4.3.5",
+    "eslint-plugin-import": "^2.31.0",
+    "globals": "^15.14.0",
+    "lodash": "^4.17.21"
   },
   "lint-staged": {
     "*.js": "eslint --fix"
   },
   "devDependencies": {
-    "release-it": "^18.1.2",
-    "@eslint/eslintrc": "^3.3.0",
-    "@eslint/js": "^9.21.0",
-    "eslint": "^9.21.0",
-    "eslint-plugin-import": "^2.31.0",
-    "globals": "^16.0.0",
-    "lint-staged": "^15.4.3",
-    "npm-check-updates": "^17.1.15",
-    "simple-git-hooks": "^2.11.1",
-    "typescript": "^5.7.3",
-    "typescript-eslint": "^8.25.0"
+    "@babel/preset-env": "^7.26.9",
+    "@jest/globals": "^29.7.0",
+    "babel-jest": "^29.7.0",
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "jest": "^29.7.0",
+    "jest-cli": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "lint-staged": "^15.2.7",
+    "npm-check-updates": "^16.14.20",
+    "simple-git-hooks": "^2.11.1"
+  },
+  "jest": {
+    "transform": {},
+    "testEnvironment": "jsdom"
   }
 }
