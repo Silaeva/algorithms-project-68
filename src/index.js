@@ -1,4 +1,4 @@
-export default (routes) => {
+export default router = (routes, request) => {
   if (!Array.isArray(routes)) {
     throw new TypeError("routes must be an array");
   }
@@ -92,5 +92,8 @@ export default (routes) => {
     return { handler: result.handler, params };
   };
 
-  return { serve };
+  // Здесь вызываем функцию serve, передавая request
+  const result = serve(request);
+
+  return result; // Возвращаем результат
 };
