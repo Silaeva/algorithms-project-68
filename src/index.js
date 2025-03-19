@@ -2,23 +2,21 @@ export default (routes) => {
   const root = Object.create(null);
 
   const addRoute = (route) => {
-    const { path, handler, method = 'GET', constraints = {} } = route; // Добавляем constraints
-    const segments = path.replace(/^\/+/, "").split("/").filter(Boolean); // Разделяем путь на сегменты
+    const { path, handler, method = 'GET', constraints = {} } = route;
+    const segments = path.replace(/^\/+/, "").split("/").filter(Boolean);
     let node = root;
 
     segments.forEach((segment) => {
-      // Если сегмент динамический (например, :id), создаем отдельный узел
       if (segment.startsWith(":")) {
         const paramName = segment.slice(1); // Извлекаем имя параметра
         if (!node.paramChild) {
           node.paramChild = Object.create(null);
         }
         if (!node.paramChild[paramName]) {
-          node.paramChild[paramName] = { paramName, constraint: constraints[paramName] }; // Добавляем ограничение
+          node.paramChild[paramName] = { paramName, constraint: constraints[paramName] }; // Ограничения для параметров
         }
         node = node.paramChild[paramName];
       } else {
-        // Для статического сегмента создаем соответствующий дочерний узел
         if (!node.children) {
           node.children = Object.create(null);
         }
@@ -29,17 +27,16 @@ export default (routes) => {
       }
     });
 
-    // Добавляем обработчик с учетом метода
     if (!node.handlers) {
       node.handlers = Object.create(null);
     }
     node.handlers[method] = handler;
   };
 
-  // Добавляем все маршруты в префиксное дерево
+  // Добавляем маршруты в дерево
   routes.forEach(addRoute);
 
-  // Функция для поиска маршрута в префиксном дереве с учетом метода
+  // Функция для поиска маршрута
   const serve = ({ path, method = 'GET' }) => {
     const segments = path.replace(/^\/+/, "").split("/").filter(Boolean);
     let node = root;
@@ -55,23 +52,21 @@ export default (routes) => {
 
       const [currentSegment, ...restSegments] = remainingSegments;
 
-      // Проверяем точное совпадение сегмента
+      // Проверка на точное совпадение сегмента
       if (currentNode.children && currentNode.children[currentSegment]) {
-        const result = findRoute(
-          currentNode.children[currentSegment],
-          restSegments
-        );
+        const result = findRoute(currentNode.children[currentSegment], restSegments);
         if (result) return result;
       }
 
-      // Проверяем параметрический маршрут
+      // Проверка параметрического сегмента
       if (currentNode.paramChild) {
         for (const paramName in currentNode.paramChild) {
           const paramNode = currentNode.paramChild[paramName];
           params[paramName] = currentSegment; // Записываем параметр в объект params
 
-          // Проверка ограничения (регулярного выражения)
-          if (paramNode.constraint && !new RegExp(paramNode.constraint).test(currentSegment)) {
+          // Применяем ограничение (если оно задано)
+          const constraint = paramNode.constraint;
+          if (constraint && !new RegExp(constraint).test(currentSegment)) {
             continue; // Пропускаем этот параметр, если не соответствует регулярному выражению
           }
 
