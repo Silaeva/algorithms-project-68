@@ -2,44 +2,45 @@ export default (routes) => {
   const root = Object.create(null);
 
   const addRoute = (route) => {
-    const { path, handler, method = "GET", constraints = {} } = route;
-    const segments = path.replace(/^\/+/, "").split("/").filter(Boolean); // Убираем начальные "/"
+    const { path, handler, method = 'GET', constraints = {} } = route; // Добавляем constraints
+    const segments = path.replace(/^\/+/, "").split("/").filter(Boolean); // Разделяем путь на сегменты
     let node = root;
 
-    for (const segment of segments) {
-      if (!node.children) {
-        node.children = Object.create(null);
-      }
-
+    segments.forEach((segment) => {
+      // Если сегмент динамический (например, :id), создаем отдельный узел
       if (segment.startsWith(":")) {
-        const paramName = segment.slice(1);
+        const paramName = segment.slice(1); // Извлекаем имя параметра
         if (!node.paramChild) {
           node.paramChild = Object.create(null);
         }
         if (!node.paramChild[paramName]) {
-          node.paramChild[paramName] = {
-            paramName,
-            constraint: constraints[paramName],
-          };
+          node.paramChild[paramName] = { paramName, constraint: constraints[paramName] }; // Добавляем ограничение
         }
         node = node.paramChild[paramName];
       } else {
+        // Для статического сегмента создаем соответствующий дочерний узел
+        if (!node.children) {
+          node.children = Object.create(null);
+        }
         if (!node.children[segment]) {
           node.children[segment] = Object.create(null);
         }
         node = node.children[segment];
       }
-    }
+    });
 
+    // Добавляем обработчик с учетом метода
     if (!node.handlers) {
       node.handlers = Object.create(null);
     }
     node.handlers[method] = handler;
   };
 
+  // Добавляем все маршруты в префиксное дерево
   routes.forEach(addRoute);
 
-  const serve = ({ path, method = "GET" }) => {
+  // Функция для поиска маршрута в префиксном дереве с учетом метода
+  const serve = ({ path, method = 'GET' }) => {
     const segments = path.replace(/^\/+/, "").split("/").filter(Boolean);
     let node = root;
     const params = Object.create(null);
@@ -67,13 +68,13 @@ export default (routes) => {
       if (currentNode.paramChild) {
         for (const paramName in currentNode.paramChild) {
           const paramNode = currentNode.paramChild[paramName];
-          if (
-            paramNode.constraint &&
-            !new RegExp(`^${paramNode.constraint}$`).test(currentSegment)
-          ) {
-            continue;
+          params[paramName] = currentSegment; // Записываем параметр в объект params
+
+          // Проверка ограничения (регулярного выражения)
+          if (paramNode.constraint && !new RegExp(paramNode.constraint).test(currentSegment)) {
+            continue; // Пропускаем этот параметр, если не соответствует регулярному выражению
           }
-          params[paramName] = currentSegment;
+
           const result = findRoute(paramNode, restSegments);
           if (result) return result;
           delete params[paramName];
