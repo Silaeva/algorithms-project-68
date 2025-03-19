@@ -1,9 +1,13 @@
 export default (routes) => {
+  if (!Array.isArray(routes)) {
+    throw new TypeError("routes must be an array");
+  }
+
   const root = Object.create(null);
 
   // Функция для добавления маршрутов
   const addRoute = (route) => {
-    const { path, handler, method = 'GET', constraints = {} } = route;
+    const { path, handler, method = "GET", constraints = {} } = route;
     const segments = path.replace(/^\/+/, "").split("/").filter(Boolean);
     let node = root;
 
@@ -38,7 +42,7 @@ export default (routes) => {
   routes.forEach(addRoute);
 
   // Функция для поиска маршрута
-  const serve = ({ path, method = 'GET' }) => {
+  const serve = ({ path, method = "GET" }) => {
     const segments = path.replace(/^\/+/, "").split("/").filter(Boolean);
     let node = root;
     const params = Object.create(null);
@@ -67,7 +71,7 @@ export default (routes) => {
 
           // Применяем ограничение (если оно задано)
           const constraint = paramNode.constraint;
-          if (constraint && !new RegExp(constraint).test(currentSegment)) {
+          if (constraint && !new RegExp(`^${constraint}$`).test(currentSegment)) {
             continue; // Пропускаем этот параметр, если не соответствует регулярному выражению
           }
 
