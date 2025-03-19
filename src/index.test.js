@@ -34,11 +34,13 @@ const routes = [
 const result = serve({
   path: "/users/long/1",
   method: "POST",
+  routes: routes, // Передаем маршруты
 });
 console.log(result.handler.body); // handler1
 
 const result2 = serve({
   path: "/courses/js/exercises/1",
   method: "GET",
+  routes: routes, // Передаем маршруты
 });
 console.log(result2.handler.body); // exercise!

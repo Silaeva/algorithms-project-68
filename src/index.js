@@ -1,6 +1,7 @@
 export default (routes) => {
   const root = Object.create(null);
 
+  // Функция для добавления маршрутов
   const addRoute = (route) => {
     const { path, handler, method = 'GET', constraints = {} } = route;
     const segments = path.replace(/^\/+/, "").split("/").filter(Boolean);
