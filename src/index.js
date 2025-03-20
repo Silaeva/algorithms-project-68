@@ -1,24 +1,23 @@
-export default router = (routes, request) => {
+export default function router(routes, request) {
   if (!Array.isArray(routes)) {
     throw new TypeError("routes must be an array");
   }
 
   const root = Object.create(null);
 
-  // Функция для добавления маршрутов
   const addRoute = (route) => {
     const { path, handler, method = "GET", constraints = {} } = route;
-    const segments = path.replace(/^\/+/, "").split("/").filter(Boolean);
+    const segments = path.replace(/^\/+/g, "").split("/").filter(Boolean);
     let node = root;
 
     segments.forEach((segment) => {
       if (segment.startsWith(":")) {
-        const paramName = segment.slice(1); // Извлекаем имя параметра
+        const paramName = segment.slice(1);
         if (!node.paramChild) {
           node.paramChild = Object.create(null);
         }
         if (!node.paramChild[paramName]) {
-          node.paramChild[paramName] = { paramName, constraint: constraints[paramName] }; // Ограничения для параметров
+          node.paramChild[paramName] = { paramName, constraint: constraints[paramName] };
         }
         node = node.paramChild[paramName];
       } else {
@@ -38,12 +37,10 @@ export default router = (routes, request) => {
     node.handlers[method] = handler;
   };
 
-  // Добавляем маршруты в дерево
   routes.forEach(addRoute);
 
-  // Функция для поиска маршрута
   const serve = ({ path, method = "GET" }) => {
-    const segments = path.replace(/^\/+/, "").split("/").filter(Boolean);
+    const segments = path.replace(/^\/+/g, "").split("/").filter(Boolean);
     let node = root;
     const params = Object.create(null);
 
@@ -57,27 +54,22 @@ export default router = (routes, request) => {
 
       const [currentSegment, ...restSegments] = remainingSegments;
 
-      // Проверка на точное совпадение сегмента
       if (currentNode.children && currentNode.children[currentSegment]) {
         const result = findRoute(currentNode.children[currentSegment], restSegments);
         if (result) return result;
       }
 
-      // Проверка параметрического сегмента
       if (currentNode.paramChild) {
         for (const paramName in currentNode.paramChild) {
           const paramNode = currentNode.paramChild[paramName];
-          params[paramName] = currentSegment; // Записываем параметр в объект params
-
-          // Применяем ограничение (если оно задано)
           const constraint = paramNode.constraint;
-          if (constraint && !new RegExp(`^${constraint}$`).test(currentSegment)) {
-            continue; // Пропускаем этот параметр, если не соответствует регулярному выражению
-          }
 
-          const result = findRoute(paramNode, restSegments);
-          if (result) return result;
-          delete params[paramName];
+          if (!constraint || new RegExp(constraint).test(currentSegment)) {
+            params[paramName] = currentSegment;
+            const result = findRoute(paramNode, restSegments);
+            if (result) return result;
+            delete params[paramName];
+          }
         }
       }
 
@@ -86,14 +78,11 @@ export default router = (routes, request) => {
 
     const result = findRoute(node, segments);
     if (!result) {
-      throw new Error(`Route not found: ${path} [${method}]`);
+      return { error: `Route not found: ${path} [${method}]` };
     }
 
     return { handler: result.handler, params };
   };
 
-  // Здесь вызываем функцию serve, передавая request
-  const result = serve(request);
-
-  return result; // Возвращаем результат
-};
+  return serve(request);
+}
