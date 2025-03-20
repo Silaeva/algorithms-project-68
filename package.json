@@ -47,6 +47,6 @@
     "simple-git-hooks": "^2.11.1"
   },
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "jsdom"
   }
 }
