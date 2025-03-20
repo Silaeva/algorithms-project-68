@@ -45,5 +45,8 @@
     "lint-staged": "^15.2.7",
     "npm-check-updates": "^16.14.20",
     "simple-git-hooks": "^2.11.1"
+  },
+  "jest": {
+    "testEnvironment": "node"
   }
 }
