@@ -70,7 +70,6 @@ export default function router(routes, request) {
           }
         }
       }
-
       return null;
     };
 
