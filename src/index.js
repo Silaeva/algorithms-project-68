@@ -1,7 +1,5 @@
 export default function router(routes, request) {
-  if (!Array.isArray(routes)) {
-    throw new TypeError("routes must be an array");
-  }
+  if (!Array.isArray(routes)) return;
 
   const root = Object.create(null);
 
