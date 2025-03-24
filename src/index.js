@@ -66,7 +66,7 @@ export default function router(routes, request) {
 
       if (currentNode.paramChild) {
         const paramNames = Object.keys(currentNode.paramChild);
-
+        /* eslint-disable-next-line no-plusplus */
         for (let i = 0; i < paramNames.length; i++) {
           const paramName = paramNames[i];
           const paramNode = currentNode.paramChild[paramName];
