@@ -7,14 +7,14 @@ export default function router(routes, request) {
     const {
       path,
       handler,
-      method = "GET",
+      method = 'GET',
       constraints = {}
     } = route;
-    const segments = path.replace(/^\/+/g, "").split("/").filter(Boolean);
+    const segments = path.replace(/^\/+/g, '').split('/').filter(Boolean);
     let node = root;
 
     segments.forEach((segment) => {
-      if (segment.startsWith(":")) {
+      if (segment.startsWith(':')) {
         const paramName = segment.slice(1);
         if (!node.paramChild) {
           node.paramChild = Object.create(null);
@@ -45,8 +45,8 @@ export default function router(routes, request) {
 
   routes.forEach(addRoute);
 
-  const serve = ({ path, method = "GET" }) => {
-    const segments = path.replace(/^\/+/g, "").split("/").filter(Boolean);
+  const serve = ({ path, method = 'GET' }) => {
+    const segments = path.replace(/^\/+/g, '').split('/').filter(Boolean);
     const node = root;
     const params = Object.create(null);
 
