@@ -1,5 +1,5 @@
 export default function router(routes, request) {
-  if (!Array.isArray(routes)) return;
+  if (!Array.isArray(routes)) return null;
 
   const root = Object.create(null);
 
@@ -8,7 +8,7 @@ export default function router(routes, request) {
       path,
       handler,
       method = 'GET',
-      constraints = {}
+      constraints = {},
     } = route;
     const segments = path.replace(/^\/+/g, '').split('/').filter(Boolean);
     let node = root;
@@ -69,16 +69,17 @@ export default function router(routes, request) {
       }
 
       if (currentNode.paramChild) {
-        for (const paramName of Object.keys(currentNode.paramChild)) {
+        Object.keys(currentNode.paramChild).forEach((paramName) => {
           const paramNode = currentNode.paramChild[paramName];
           const { constraint } = paramNode;
+
           if (!constraint || new RegExp(constraint).test(currentSegment)) {
             params[paramName] = currentSegment;
             const result = findRoute(paramNode, restSegments);
             if (result) return result;
             delete params[paramName];
           }
-        }
+        });
       }
       return null;
     };
