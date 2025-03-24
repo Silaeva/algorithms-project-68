@@ -63,7 +63,7 @@ export default function router(routes, request) {
       if (currentNode.children && currentNode.children[currentSegment]) {
         const result = findRoute(
           currentNode.children[currentSegment],
-          restSegments
+          restSegments,
         );
         if (result) return result;
       }
@@ -80,6 +80,7 @@ export default function router(routes, request) {
           }
         }
       }
+      return null;
     };
 
     const result = findRoute(node, segments);
