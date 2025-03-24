@@ -47,7 +47,7 @@ export default function router(routes, request) {
 
   const serve = ({ path, method = 'GET' }) => {
     const segments = path.replace(/^\/+/g, '').split('/').filter(Boolean);
-    const node = root;
+    let node = root;
     const params = Object.create(null);
 
     const findRoute = (currentNode, remainingSegments) => {
@@ -61,15 +61,11 @@ export default function router(routes, request) {
       const [currentSegment, ...restSegments] = remainingSegments;
 
       if (currentNode.children && currentNode.children[currentSegment]) {
-        const result = findRoute(
-          currentNode.children[currentSegment],
-          restSegments,
-        );
-        if (result) return result;
+        return findRoute(currentNode.children[currentSegment], restSegments);
       }
 
       if (currentNode.paramChild) {
-        Object.keys(currentNode.paramChild).forEach((paramName) => {
+        for (const paramName in currentNode.paramChild) {
           const paramNode = currentNode.paramChild[paramName];
           const { constraint } = paramNode;
 
@@ -79,7 +75,7 @@ export default function router(routes, request) {
             if (result) return result;
             delete params[paramName];
           }
-        });
+        }
       }
       return null;
     };
@@ -89,7 +85,7 @@ export default function router(routes, request) {
       return { error: `Route not found: ${path} [${method}]` };
     }
 
-    return { handler: result.handler, params };
+    return result;
   };
 
   return serve(request);
