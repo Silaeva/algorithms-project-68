@@ -15,7 +15,10 @@ export default function router(routes, request) {
           node.paramChild = Object.create(null);
         }
         if (!node.paramChild[paramName]) {
-          node.paramChild[paramName] = { paramName, constraint: constraints[paramName] };
+          node.paramChild[paramName] = {
+            paramName,
+            constraint: constraints[paramName],
+          };
         }
         node = node.paramChild[paramName];
       } else {
@@ -39,7 +42,7 @@ export default function router(routes, request) {
 
   const serve = ({ path, method = "GET" }) => {
     const segments = path.replace(/^\/+/g, "").split("/").filter(Boolean);
-    let node = root;
+    const node = root;
     const params = Object.create(null);
 
     const findRoute = (currentNode, remainingSegments) => {
@@ -53,15 +56,17 @@ export default function router(routes, request) {
       const [currentSegment, ...restSegments] = remainingSegments;
 
       if (currentNode.children && currentNode.children[currentSegment]) {
-        const result = findRoute(currentNode.children[currentSegment], restSegments);
+        const result = findRoute(
+          currentNode.children[currentSegment],
+          restSegments
+        );
         if (result) return result;
       }
 
       if (currentNode.paramChild) {
-        for (const paramName in currentNode.paramChild) {
+        for (const paramName of Object.keys(currentNode.paramChild)) {
           const paramNode = currentNode.paramChild[paramName];
-          const constraint = paramNode.constraint;
-
+          const { constraint } = paramNode;
           if (!constraint || new RegExp(constraint).test(currentSegment)) {
             params[paramName] = currentSegment;
             const result = findRoute(paramNode, restSegments);
@@ -70,8 +75,6 @@ export default function router(routes, request) {
           }
         }
       }
-      
-      return null;
     };
 
     const result = findRoute(node, segments);
