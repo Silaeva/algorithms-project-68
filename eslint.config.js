@@ -36,7 +36,7 @@ export default [
   ...compat.extends('airbnb-base'),
   {
     rules: {
-      'no-restricted-syntax': 'off',
+      'no-plusplus': ['error', { 'allowForLoopAfterthoughts': true }],
       'single-quote': ['error', 'single', { avoidEscape: true }],
       'no-underscore-dangle': [
         'error',
