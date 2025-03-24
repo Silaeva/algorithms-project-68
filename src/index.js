@@ -4,7 +4,12 @@ export default function router(routes, request) {
   const root = Object.create(null);
 
   const addRoute = (route) => {
-    const { path, handler, method = "GET", constraints = {} } = route;
+    const {
+      path,
+      handler,
+      method = "GET",
+      constraints = {}
+    } = route;
     const segments = path.replace(/^\/+/g, "").split("/").filter(Boolean);
     let node = root;
 
