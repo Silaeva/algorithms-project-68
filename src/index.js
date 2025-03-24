@@ -47,7 +47,7 @@ export default function router(routes, request) {
 
   const serve = ({ path, method = 'GET' }) => {
     const segments = path.replace(/^\/+/g, '').split('/').filter(Boolean);
-    let node = root;
+    const node = root;
     const params = Object.create(null);
 
     const findRoute = (currentNode, remainingSegments) => {
