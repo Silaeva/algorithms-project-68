@@ -65,7 +65,10 @@ export default function router(routes, request) {
       }
 
       if (currentNode.paramChild) {
-        for (const paramName in currentNode.paramChild) {
+        const paramNames = Object.keys(currentNode.paramChild);
+
+        for (let i = 0; i < paramNames.length; i++) {
+          const paramName = paramNames[i];
           const paramNode = currentNode.paramChild[paramName];
           const { constraint } = paramNode;
 
